@@ -20,7 +20,6 @@ An AI-assisted clinical triage and diagnosis system built with React Native.
 ### Prerequisites
 - Node.js (v16 or higher)
 - npm or yarn
-- Expo CLI (`npm install -g expo-cli`)
 - iOS Simulator (Mac) or Android Emulator
 
 ### Installation
@@ -38,8 +37,6 @@ npm install
 3. Start the development server:
 ```bash
 npm start
-# or
-expo start
 ```
 
 4. Press:
@@ -133,6 +130,7 @@ This implementation addresses the key requirements from the specification:
 
 ## 📝 Notes
 
+- The global Expo CLI is deprecated. Use npx expo for all Expo commands.
 - This is a basic UI implementation for demonstration
 - Backend integration (AI model, database, authentication) would be needed for production
 - Mock data is used for demonstration purposes
