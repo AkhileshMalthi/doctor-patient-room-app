@@ -1,45 +1,40 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import RoleSelectionScreen from '../screens/RoleSelectionScreen';
+import LandingScreen from '../screens/LandingScreen';
+import PatientHomeScreen from '../screens/PatientHomeScreen';
 import PatientChatScreen from '../screens/PatientChatScreen';
 import DoctorDashboardScreen from '../screens/DoctorDashboardScreen';
-import ReportReviewScreen from '../screens/ReportReviewScreen';
+import DoctorDetailScreen from '../screens/DoctorDetailScreen';
 
 const Stack = createStackNavigator();
 
 const AppNavigator = () => {
   return (
     <Stack.Navigator
-      initialRouteName="RoleSelection"
+      initialRouteName="Landing"
       screenOptions={{
-        headerStyle: {
-          backgroundColor: '#2563EB',
-        },
-        headerTintColor: '#fff',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
+        headerShown: false,
       }}
     >
-      <Stack.Screen 
-        name="RoleSelection" 
-        component={RoleSelectionScreen} 
-        options={{ title: 'Doctor Patient Room', headerShown: false }}
+      <Stack.Screen
+        name="Landing"
+        component={LandingScreen}
       />
-      <Stack.Screen 
-        name="PatientChat" 
-        component={PatientChatScreen} 
-        options={{ title: 'AI Triage Assistant' }}
+      <Stack.Screen
+        name="PatientHome"
+        component={PatientHomeScreen}
       />
-      <Stack.Screen 
-        name="DoctorDashboard" 
-        component={DoctorDashboardScreen} 
-        options={{ title: 'Doctor Dashboard' }}
+      <Stack.Screen
+        name="PatientChat"
+        component={PatientChatScreen}
       />
-      <Stack.Screen 
-        name="ReportReview" 
-        component={ReportReviewScreen} 
-        options={{ title: 'Review Report' }}
+      <Stack.Screen
+        name="DoctorDashboard"
+        component={DoctorDashboardScreen}
+      />
+      <Stack.Screen
+        name="DoctorDetail"
+        component={DoctorDetailScreen}
       />
     </Stack.Navigator>
   );

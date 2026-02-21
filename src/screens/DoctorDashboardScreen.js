@@ -1,459 +1,146 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  SafeAreaView,
-} from 'react-native';
-import { COLORS } from '../constants/colors';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { Activity, LogOut, CheckCircle, FileText, Users, Clock, User } from 'lucide-react-native';
+import { SafeAreaView } from '../components/Shared';
 
-const MOCK_REPORTS = [
+const INITIAL_PATIENTS = [
   {
-    id: '1',
-    patientName: 'John Smith',
-    age: 34,
-    gender: 'Male',
-    chiefComplaint: 'Chest pain and shortness of breath',
-    urgency: 'high',
-    status: 'pending',
-    timestamp: '2026-01-28 09:30 AM',
-    symptoms: ['Chest pain', 'Shortness of breath', 'Fatigue'],
+    id: '101', name: 'Rajesh Kumar', age: 45, gender: 'M', time: '10:42 AM', avatar: 'RK',
+    complaint: 'Chest Pain & Sweating', hpi: 'Sudden onset central chest pressure ("heavy elephant"). Radiates to left jaw. Nausea present.',
+    vitals: { hr: '110', bp: '150/95', temp: '98.6°F', spo2: '97%' },
+    urgency: 'High', alert: 'Potential Acute Coronary Syndrome (ACS).', status: 'Draft'
   },
   {
-    id: '2',
-    patientName: 'Sarah Johnson',
-    age: 28,
-    gender: 'Female',
-    chiefComplaint: 'Headache and fever',
-    urgency: 'medium',
-    status: 'pending',
-    timestamp: '2026-01-28 10:15 AM',
-    symptoms: ['Headache', 'Fever', 'Body ache'],
+    id: '102', name: 'Priya Sharma', age: 29, gender: 'F', time: '10:30 AM', avatar: 'PS',
+    complaint: 'Severe Migraine', hpi: 'Unilateral pulsating headache (Right). Photophobia. No vomiting. Duration 2 days.',
+    vitals: { hr: '82', bp: '110/70', temp: '98.4°F', spo2: '99%' },
+    urgency: 'Moderate', alert: null, status: 'Draft'
   },
   {
-    id: '3',
-    patientName: 'Michael Brown',
-    age: 45,
-    gender: 'Male',
-    chiefComplaint: 'Back pain for 3 days',
-    urgency: 'low',
-    status: 'approved',
-    timestamp: '2026-01-28 08:00 AM',
-    symptoms: ['Lower back pain', 'Stiffness'],
-  },
-  {
-    id: '4',
-    patientName: 'Emily Davis',
-    age: 52,
-    gender: 'Female',
-    chiefComplaint: 'Dizziness and nausea',
-    urgency: 'medium',
-    status: 'pending',
-    timestamp: '2026-01-28 11:00 AM',
-    symptoms: ['Dizziness', 'Nausea', 'Lightheadedness'],
-  },
+    id: '103', name: 'Arjun Singh', age: 8, gender: 'M', time: '09:15 AM', avatar: 'AS',
+    complaint: 'Viral Fever Followup', hpi: 'Fever subsiding. Temp normal for 24h. Appetite improving.',
+    vitals: { hr: '98', bp: '--', temp: '98.1°F', spo2: '99%' },
+    urgency: 'Low', alert: null, status: 'Approved'
+  }
 ];
 
-const DoctorDashboardScreen = ({ navigation }) => {
-  const [filter, setFilter] = useState('all');
-  const [reports, setReports] = useState(MOCK_REPORTS);
-
-  const filteredReports = reports.filter((report) => {
-    if (filter === 'all') return true;
-    if (filter === 'pending') return report.status === 'pending';
-    if (filter === 'approved') return report.status === 'approved';
-    if (filter === 'high') return report.urgency === 'high';
-    return true;
-  });
-
-  const getUrgencyColor = (urgency) => {
-    switch (urgency) {
-      case 'high':
-        return COLORS.danger;
-      case 'medium':
-        return COLORS.warning;
-      case 'low':
-        return COLORS.secondary;
-      default:
-        return COLORS.gray;
-    }
-  };
-
-  const getUrgencyLabel = (urgency) => {
-    switch (urgency) {
-      case 'high':
-        return 'High Priority';
-      case 'medium':
-        return 'Medium Priority';
-      case 'low':
-        return 'Low Priority';
-      default:
-        return 'Unknown';
-    }
-  };
-
-  const renderReportCard = ({ item }) => (
-    <TouchableOpacity
-      style={styles.reportCard}
-      onPress={() => navigation.navigate('ReportReview', { report: item })}
-      activeOpacity={0.8}
-    >
-      <View style={styles.cardHeader}>
-        <View style={styles.patientInfo}>
-          <Text style={styles.patientName}>{item.patientName}</Text>
-          <Text style={styles.patientDetails}>
-            {item.age} yrs • {item.gender}
-          </Text>
-        </View>
-        <View
-          style={[
-            styles.urgencyBadge,
-            { backgroundColor: getUrgencyColor(item.urgency) + '20' },
-          ]}
-        >
-          <Text
-            style={[
-              styles.urgencyText,
-              { color: getUrgencyColor(item.urgency) },
-            ]}
-          >
-            {getUrgencyLabel(item.urgency)}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.divider} />
-
-      <View style={styles.complaintSection}>
-        <Text style={styles.sectionLabel}>Chief Complaint</Text>
-        <Text style={styles.complaintText}>{item.chiefComplaint}</Text>
-      </View>
-
-      <View style={styles.symptomsContainer}>
-        {item.symptoms.map((symptom, index) => (
-          <View key={index} style={styles.symptomTag}>
-            <Text style={styles.symptomText}>{symptom}</Text>
-          </View>
-        ))}
-      </View>
-
-      <View style={styles.cardFooter}>
-        <Text style={styles.timestamp}>{item.timestamp}</Text>
-        <View
-          style={[
-            styles.statusBadge,
-            {
-              backgroundColor:
-                item.status === 'approved'
-                  ? COLORS.secondary + '20'
-                  : COLORS.warning + '20',
-            },
-          ]}
-        >
-          <Text
-            style={[
-              styles.statusText,
-              {
-                color:
-                  item.status === 'approved'
-                    ? COLORS.secondary
-                    : COLORS.warning,
-              },
-            ]}
-          >
-            {item.status === 'approved' ? '✓ Approved' : '⏳ Pending'}
-          </Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-
-  const FilterButton = ({ label, value, count }) => (
-    <TouchableOpacity
-      style={[styles.filterButton, filter === value && styles.filterButtonActive]}
-      onPress={() => setFilter(value)}
-    >
-      <Text
-        style={[
-          styles.filterButtonText,
-          filter === value && styles.filterButtonTextActive,
-        ]}
-      >
-        {label}
-      </Text>
-      {count > 0 && (
-        <View style={styles.countBadge}>
-          <Text style={styles.countText}>{count}</Text>
-        </View>
-      )}
-    </TouchableOpacity>
-  );
-
-  const pendingCount = reports.filter((r) => r.status === 'pending').length;
-  const highPriorityCount = reports.filter((r) => r.urgency === 'high').length;
+export default function DoctorDashboardScreen({ navigation }) {
+  const [activeTab, setActiveTab] = useState('Queue');
+  const patients = INITIAL_PATIENTS;
+  const pendingCount = patients.filter(p => p.status === 'Draft').length;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.statsContainer}>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{reports.length}</Text>
-          <Text style={styles.statLabel}>Total Reports</Text>
-        </View>
-        <View style={[styles.statCard, styles.statCardHighlight]}>
-          <Text style={[styles.statNumber, styles.statNumberHighlight]}>
-            {pendingCount}
-          </Text>
-          <Text style={[styles.statLabel, styles.statLabelHighlight]}>
-            Pending Review
-          </Text>
-        </View>
-        <View style={[styles.statCard, styles.statCardDanger]}>
-          <Text style={[styles.statNumber, styles.statNumberDanger]}>
-            {highPriorityCount}
-          </Text>
-          <Text style={[styles.statLabel, styles.statLabelDanger]}>
-            High Priority
-          </Text>
-        </View>
-      </View>
+    <SafeAreaView className="bg-white">
+      <View className="flex-1">
+        {activeTab === 'Queue' ? (
+          <>
+            <View className="bg-white px-5 py-4 border-b border-slate-100 z-10">
+              <View className="flex-row justify-between items-center mb-4 mt-2">
+                <View className="flex-row items-center gap-3">
+                  <View className="w-10 h-10 bg-indigo-600 rounded-xl items-center justify-center shadow-md">
+                    <Activity color="white" size={20} />
+                  </View>
+                  <View>
+                    <Text className="font-bold text-slate-900 text-lg leading-tight">Doctor Patient Room</Text>
+                    <Text className="text-xs text-slate-500 font-medium tracking-wide">Surampalem</Text>
+                  </View>
+                </View>
+                <TouchableOpacity onPress={() => navigation.navigate('Landing')} className="p-2 bg-slate-50 rounded-full">
+                  <LogOut color="#475569" size={20} />
+                </TouchableOpacity>
+              </View>
 
-      <View style={styles.filterContainer}>
-        <FilterButton label="All" value="all" count={reports.length} />
-        <FilterButton label="Pending" value="pending" count={pendingCount} />
-        <FilterButton label="Approved" value="approved" count={0} />
-        <FilterButton label="High Priority" value="high" count={highPriorityCount} />
-      </View>
+              <View className="flex-row gap-3">
+                <TouchableOpacity className="bg-slate-900 px-4 py-1.5 rounded-full shadow-md">
+                  <Text className="text-white text-xs font-semibold">Queue ({pendingCount})</Text>
+                </TouchableOpacity>
+                <TouchableOpacity className="bg-white border border-slate-200 px-4 py-1.5 rounded-full">
+                  <Text className="text-slate-600 text-xs font-semibold">Urgent</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
 
-      <FlatList
-        data={filteredReports}
-        renderItem={renderReportCard}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>📋</Text>
-            <Text style={styles.emptyText}>No reports found</Text>
-            <Text style={styles.emptySubtext}>
-              Reports will appear here when patients submit them
-            </Text>
+            <ScrollView className="px-4 py-4" showsVerticalScrollIndicator={false}>
+              {patients.map((patient) => (
+                <TouchableOpacity
+                  key={patient.id}
+                  onPress={() => navigation.navigate('DoctorDetail', { patient })}
+                  className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm mb-3"
+                >
+                  <View className="flex-row justify-between items-start mb-2">
+                    <View className="flex-row items-center gap-3">
+                      <View className="relative">
+                        <View className={`w-10 h-10 rounded-full items-center justify-center ${patient.urgency === 'High' ? 'bg-red-100' : 'bg-slate-100'
+                          }`}>
+                          <Text className={`text-xs font-bold ${patient.urgency === 'High' ? 'text-red-700' : 'text-slate-600'
+                            }`}>{patient.avatar}</Text>
+                        </View>
+                        {patient.urgency === 'High' && (
+                          <View className="absolute bottom-0 right-0 w-3 h-3 bg-red-500 border-2 border-white rounded-full" />
+                        )}
+                      </View>
+                      <View>
+                        <Text className="font-bold text-slate-900">{patient.name}</Text>
+                        <Text className="text-[10px] text-slate-400">{patient.id} • {patient.gender}, {patient.age}y</Text>
+                      </View>
+                    </View>
+                    <Text className="text-xs text-slate-400">{patient.time}</Text>
+                  </View>
+
+                  <View className="pl-[52px]">
+                    <Text className="text-sm text-slate-600 mb-3 font-medium" numberOfLines={1}>{patient.complaint}</Text>
+                    <View className="flex-row items-center justify-between">
+                      <View className={`px-2 py-1 rounded-full border ${patient.urgency === 'High' ? "bg-red-50 border-red-100" :
+                          patient.urgency === 'Moderate' ? "bg-amber-50 border-amber-100" :
+                            "bg-green-50 border-green-100"
+                        }`}>
+                        <Text className={`text-[10px] font-bold uppercase ${patient.urgency === 'High' ? "text-red-700" :
+                            patient.urgency === 'Moderate' ? "text-amber-700" :
+                              "text-green-700"
+                          }`}>{patient.urgency}</Text>
+                      </View>
+
+                      {patient.status === 'Approved' ? (
+                        <View className="flex-row items-center gap-1">
+                          <CheckCircle color="#16a34a" size={12} />
+                          <Text className="text-[10px] text-green-600 font-bold">Approved</Text>
+                        </View>
+                      ) : (
+                        <View className="flex-row items-center gap-1">
+                          <FileText color="#94a3b8" size={12} />
+                          <Text className="text-[10px] text-slate-400 font-medium">Draft</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+              <View className="h-20" />
+            </ScrollView>
+          </>
+        ) : (
+          <View className="flex-1 items-center justify-center p-8">
+            <User color="#cbd5e1" size={48} className="mb-4" />
+            <Text className="text-slate-400 text-center">Module Locked (Phase 2)</Text>
           </View>
-        }
-      />
+        )}
+      </View>
+
+      {/* Bottom Tabs */}
+      <View className="flex-row h-[70px] border-t border-slate-100 bg-white items-center justify-around pb-2">
+        <TouchableOpacity onPress={() => setActiveTab('Queue')} className="items-center gap-1 p-2">
+          <Users color={activeTab === 'Queue' ? "#4f46e5" : "#94a3b8"} size={20} />
+          <Text className={`text-[10px] ${activeTab === 'Queue' ? 'text-indigo-600 font-bold' : 'text-slate-400 font-medium'}`}>Queue</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setActiveTab('History')} className="items-center gap-1 p-2">
+          <Clock color={activeTab === 'History' ? "#4f46e5" : "#94a3b8"} size={20} />
+          <Text className={`text-[10px] ${activeTab === 'History' ? 'text-indigo-600 font-bold' : 'text-slate-400 font-medium'}`}>History</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setActiveTab('Profile')} className="items-center gap-1 p-2">
+          <User color={activeTab === 'Profile' ? "#4f46e5" : "#94a3b8"} size={20} />
+          <Text className={`text-[10px] ${activeTab === 'Profile' ? 'text-indigo-600 font-bold' : 'text-slate-400 font-medium'}`}>Profile</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    padding: 16,
-    gap: 12,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    shadowColor: COLORS.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statCardHighlight: {
-    backgroundColor: COLORS.primary,
-  },
-  statCardDanger: {
-    backgroundColor: COLORS.danger,
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: COLORS.black,
-  },
-  statNumberHighlight: {
-    color: COLORS.white,
-  },
-  statNumberDanger: {
-    color: COLORS.white,
-  },
-  statLabel: {
-    fontSize: 11,
-    color: COLORS.gray,
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  statLabelHighlight: {
-    color: 'rgba(255,255,255,0.8)',
-  },
-  statLabelDanger: {
-    color: 'rgba(255,255,255,0.8)',
-  },
-  filterContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    gap: 8,
-  },
-  filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.lightGray,
-  },
-  filterButtonActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  filterButtonText: {
-    fontSize: 13,
-    color: COLORS.gray,
-    fontWeight: '500',
-  },
-  filterButtonTextActive: {
-    color: COLORS.white,
-  },
-  countBadge: {
-    backgroundColor: COLORS.lightGray,
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    marginLeft: 6,
-  },
-  countText: {
-    fontSize: 11,
-    color: COLORS.black,
-    fontWeight: 'bold',
-  },
-  listContainer: {
-    padding: 16,
-    paddingTop: 4,
-  },
-  reportCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: COLORS.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  patientInfo: {
-    flex: 1,
-  },
-  patientName: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: COLORS.black,
-  },
-  patientDetails: {
-    fontSize: 13,
-    color: COLORS.gray,
-    marginTop: 2,
-  },
-  urgencyBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  urgencyText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.lightGray,
-    marginVertical: 12,
-  },
-  complaintSection: {
-    marginBottom: 12,
-  },
-  sectionLabel: {
-    fontSize: 11,
-    color: COLORS.gray,
-    marginBottom: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  complaintText: {
-    fontSize: 14,
-    color: COLORS.black,
-    lineHeight: 20,
-  },
-  symptomsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 12,
-  },
-  symptomTag: {
-    backgroundColor: COLORS.patientBubble,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  symptomText: {
-    fontSize: 12,
-    color: COLORS.primary,
-    fontWeight: '500',
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  timestamp: {
-    fontSize: 11,
-    color: COLORS.gray,
-  },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.black,
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: COLORS.gray,
-    textAlign: 'center',
-    paddingHorizontal: 40,
-  },
-});
-
-export default DoctorDashboardScreen;
+}

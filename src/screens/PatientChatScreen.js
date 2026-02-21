@@ -1,338 +1,140 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
-  Alert,
-} from 'react-native';
-import { COLORS } from '../constants/colors';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { ChevronLeft, MoreVertical, Activity, Send } from 'lucide-react-native';
+import { SafeAreaView } from '../components/Shared';
 
-const PatientChatScreen = () => {
+export default function PatientChatScreen({ navigation }) {
   const [messages, setMessages] = useState([
     {
-      id: '1',
-      text: 'Hello! I am your AI Triage Assistant. I will help gather information about your symptoms before your consultation. Please describe what brings you in today.',
-      sender: 'ai',
-      timestamp: new Date(),
-    },
+      id: 1,
+      role: 'ai',
+      text: "Namaste! I am your medical assistant. Please describe your symptoms. (e.g., 'I have fever' or 'Pet dard ho raha hai')"
+    }
   ]);
   const [inputText, setInputText] = useState('');
-  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const flatListRef = useRef(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const scrollViewRef = useRef(null);
 
-  const sendMessage = () => {
-    if (inputText.trim() === '') return;
-
-    const userMessage = {
-      id: Date.now().toString(),
-      text: inputText.trim(),
-      sender: 'user',
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInputText('');
-
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponses = [
-        'Thank you for sharing that. How long have you been experiencing these symptoms?',
-        'I understand. Are you experiencing any pain? If so, on a scale of 1-10, how would you rate it?',
-        'Got it. Do you have any known allergies or pre-existing medical conditions?',
-        'Thank you for that information. Are you currently taking any medications?',
-        'I have noted that. Have you noticed anything that makes your symptoms better or worse?',
-      ];
-
-      const randomResponse = aiResponses[Math.floor(Math.random() * aiResponses.length)];
-      
-      const aiMessage = {
-        id: (Date.now() + 1).toString(),
-        text: randomResponse,
-        sender: 'ai',
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, aiMessage]);
-    }, 1000);
-  };
-
-  const generateReport = () => {
-    Alert.alert(
-      'Generate Preliminary Report',
-      'Are you ready to generate your preliminary medical report? This will be reviewed by a doctor.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Generate',
-          onPress: () => {
-            setIsGeneratingReport(true);
-            setTimeout(() => {
-              const reportMessage = {
-                id: (Date.now() + 2).toString(),
-                text: '✅ Your preliminary report has been generated and sent to the doctor for review. You will be notified once it is approved.',
-                sender: 'ai',
-                timestamp: new Date(),
-                isReport: true,
-              };
-              setMessages((prev) => [...prev, reportMessage]);
-              setIsGeneratingReport(false);
-            }, 2000);
-          },
-        },
-      ]
-    );
-  };
-
-  const renderMessage = ({ item }) => {
-    const isUser = item.sender === 'user';
-    const isReport = item.isReport;
-
-    return (
-      <View
-        style={[
-          styles.messageContainer,
-          isUser ? styles.userMessage : styles.aiMessage,
-        ]}
-      >
-        {!isUser && (
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>🤖</Text>
-          </View>
-        )}
-        <View
-          style={[
-            styles.messageBubble,
-            isUser
-              ? styles.userBubble
-              : isReport
-              ? styles.reportBubble
-              : styles.aiBubble,
-          ]}
-        >
-          <Text
-            style={[
-              styles.messageText,
-              isUser ? styles.userText : styles.aiText,
-            ]}
-          >
-            {item.text}
-          </Text>
-          <Text style={styles.timestamp}>
-            {item.timestamp.toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </Text>
-        </View>
-        {isUser && (
-          <View style={[styles.avatar, styles.userAvatar]}>
-            <Text style={styles.avatarText}>👤</Text>
-          </View>
-        )}
-      </View>
-    );
-  };
-
-  useEffect(() => {
-    if (flatListRef.current) {
-      flatListRef.current.scrollToEnd({ animated: true });
+  const generateAIResponse = (input) => {
+    const lower = input.toLowerCase();
+    if (lower.includes('chest') || lower.includes('pain') || lower.includes('heart')) {
+      return "⚠️ I notice you mentioned chest pain. Is the pain radiating to your arm or jaw? If you are sweating or feeling dizzy, please call 108 immediately.";
     }
-  }, [messages]);
+    if (lower.includes('fever') || lower.includes('bukhar')) {
+      return "I've noted the fever. How many days have you had it? Do you have any chills or body aches?";
+    }
+    return "Understood. Could you tell me a bit more about how long you have been feeling this way? Any other symptoms?";
+  };
+
+  const handleSend = () => {
+    if (!inputText.trim()) return;
+    const userMsg = { id: Date.now(), role: 'user', text: inputText };
+    setMessages(prev => [...prev, userMsg]);
+    setInputText('');
+    setIsTyping(true);
+    setTimeout(() => {
+      const response = generateAIResponse(userMsg.text);
+      setMessages(prev => [...prev, { id: Date.now() + 1, role: 'ai', text: response }]);
+      setIsTyping(false);
+    }, 1500);
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView className="bg-slate-50">
+      {/* Header */}
+      <View className="bg-white px-4 py-3 border-b border-slate-100 flex-row items-center justify-between z-20">
+        <View className="flex-row items-center gap-3">
+          <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 rounded-full">
+            <ChevronLeft color="#475569" size={24} />
+          </TouchableOpacity>
+          <View className="flex-row items-center gap-2">
+            <View className="relative">
+              <View className="w-10 h-10 rounded-full bg-teal-600 items-center justify-center shadow-md">
+                <Text className="text-white font-bold text-sm">AI</Text>
+              </View>
+              <View className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
+            </View>
+            <View>
+              <Text className="font-bold text-slate-900 text-sm">Doctor Patient Room AI</Text>
+              <Text className="text-[10px] text-slate-500">Always Online</Text>
+            </View>
+          </View>
+        </View>
+        <TouchableOpacity className="p-2">
+          <MoreVertical color="#94a3b8" size={20} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Emergency Banner */}
+      <View className="bg-red-50 px-4 py-2 flex-row items-center justify-center gap-2 border-b border-red-100">
+        <Activity color="#ef4444" size={14} />
+        <Text className="text-[10px] text-red-600 font-bold uppercase tracking-widest">Emergency? Dial 112 / 108</Text>
+      </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
-        keyboardVerticalOffset={90}
+        className="flex-1"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <View style={styles.infoBanner}>
-          <Text style={styles.infoText}>
-            ⚠️ This is an AI assistant, not a doctor. For emergencies, call 911.
-          </Text>
-        </View>
+        <ScrollView
+          className="flex-1 px-4 pt-4"
+          ref={scrollViewRef}
+          onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+        >
+          <View className="items-center my-2">
+            <View className="bg-slate-200/50 px-3 py-1 rounded-full">
+              <Text className="text-[10px] font-bold text-slate-400">Today</Text>
+            </View>
+          </View>
 
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          renderItem={renderMessage}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.messagesList}
-          showsVerticalScrollIndicator={false}
-        />
+          {messages.map((msg) => (
+            <View key={msg.id} className={`flex-row mb-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              {msg.role === 'ai' && (
+                <View className="w-6 h-6 rounded-full bg-teal-100 mr-2 mt-2 items-center justify-center">
+                  <Text className="text-[10px] font-bold text-teal-700">AI</Text>
+                </View>
+              )}
+              <View className={`max-w-[80%] p-3 px-4 rounded-2xl shadow-sm ${msg.role === 'user' ? 'bg-slate-900 rounded-tr-none' : 'bg-white border border-slate-100 rounded-tl-none'}`}>
+                <Text className={`text-sm leading-relaxed ${msg.role === 'user' ? 'text-white' : 'text-slate-700'}`}>
+                  {msg.text}
+                </Text>
+              </View>
+            </View>
+          ))}
 
-        <View style={styles.inputContainer}>
-          <TouchableOpacity
-            style={styles.reportButton}
-            onPress={generateReport}
-            disabled={isGeneratingReport}
-          >
-            <Text style={styles.reportButtonText}>
-              {isGeneratingReport ? '⏳' : '📋'}
-            </Text>
-          </TouchableOpacity>
+          {isTyping && (
+            <View className="flex-row mb-4 justify-start">
+              <View className="w-6 h-6 rounded-full bg-teal-100 mr-2 mt-2 items-center justify-center">
+                <Text className="text-[10px] font-bold text-teal-700">AI</Text>
+              </View>
+              <View className="bg-white border border-slate-100 p-4 rounded-2xl rounded-tl-none shadow-sm flex-row items-center justify-center">
+                <ActivityIndicator size="small" color="#0d9488" />
+              </View>
+            </View>
+          )}
+        </ScrollView>
 
-          <TextInput
-            style={styles.input}
-            value={inputText}
-            onChangeText={setInputText}
-            placeholder="Describe your symptoms..."
-            placeholderTextColor={COLORS.gray}
-            multiline
-            maxLength={500}
-          />
-
-          <TouchableOpacity
-            style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
-            onPress={sendMessage}
-            disabled={!inputText.trim()}
-          >
-            <Text style={styles.sendButtonText}>➤</Text>
-          </TouchableOpacity>
+        {/* Input Area */}
+        <View className="bg-white border-t border-slate-100 p-3 pb-6">
+          <View className="flex-row items-center gap-2 bg-slate-50 p-1.5 rounded-full border border-slate-200">
+            <TextInput
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder="Type symptoms here..."
+              placeholderTextColor="#94a3b8"
+              className="flex-1 bg-transparent text-sm px-4 text-slate-800 h-10"
+              onSubmitEditing={handleSend}
+            />
+            <TouchableOpacity
+              onPress={handleSend}
+              disabled={!inputText.trim()}
+              className={`w-10 h-10 rounded-full items-center justify-center shadow-md ${inputText.trim() ? 'bg-teal-600' : 'bg-slate-300'}`}
+            >
+              <Send color="white" size={18} />
+            </TouchableOpacity>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  infoBanner: {
-    backgroundColor: '#FEF3C7',
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#FCD34D',
-  },
-  infoText: {
-    fontSize: 12,
-    color: '#92400E',
-    textAlign: 'center',
-  },
-  messagesList: {
-    padding: 16,
-    paddingBottom: 20,
-  },
-  messageContainer: {
-    flexDirection: 'row',
-    marginBottom: 16,
-    alignItems: 'flex-end',
-  },
-  userMessage: {
-    justifyContent: 'flex-end',
-  },
-  aiMessage: {
-    justifyContent: 'flex-start',
-  },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLORS.aiBubble,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
-  },
-  userAvatar: {
-    backgroundColor: COLORS.primary,
-    marginRight: 0,
-    marginLeft: 8,
-  },
-  avatarText: {
-    fontSize: 18,
-  },
-  messageBubble: {
-    maxWidth: '75%',
-    padding: 14,
-    borderRadius: 20,
-  },
-  userBubble: {
-    backgroundColor: COLORS.primary,
-    borderBottomRightRadius: 4,
-  },
-  aiBubble: {
-    backgroundColor: COLORS.white,
-    borderBottomLeftRadius: 4,
-    borderWidth: 1,
-    borderColor: COLORS.lightGray,
-  },
-  reportBubble: {
-    backgroundColor: COLORS.doctorBubble,
-    borderBottomLeftRadius: 4,
-    borderWidth: 1,
-    borderColor: COLORS.secondary,
-  },
-  messageText: {
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  userText: {
-    color: COLORS.white,
-  },
-  aiText: {
-    color: COLORS.black,
-  },
-  timestamp: {
-    fontSize: 10,
-    color: COLORS.gray,
-    marginTop: 6,
-    alignSelf: 'flex-end',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: COLORS.white,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.lightGray,
-  },
-  reportButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.doctorBubble,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
-  },
-  reportButtonText: {
-    fontSize: 20,
-  },
-  input: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: COLORS.black,
-    maxHeight: 100,
-  },
-  sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
-  },
-  sendButtonDisabled: {
-    backgroundColor: COLORS.lightGray,
-  },
-  sendButtonText: {
-    fontSize: 20,
-    color: COLORS.white,
-    marginLeft: 2,
-  },
-});
-
-export default PatientChatScreen;
+}
